@@ -4,40 +4,53 @@ import AddIcon from "../assets/icons/Add2.svg";
 import Activate from "../assets/icons/Activate.png";
 import MoreInfoIcon from "../assets/icons/MoreInfo.svg";
 import SettingIcons from "../assets/icons/settings.svg";
+import {
+  Description,
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+} from "@headlessui/react";
+import CloseIcon from "../assets/icons/Close.svg";
+import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 
 const LeftSide = ({
   offices,
   activeOfficeId,
   setActiveOfficeId,
-  handleAddNewOffice,
   handleDeleteOffice,
   addOffice,
 }) => {
-  const handleInputChange = (e) => {
-    console.log("input changed : ", e.target.value);
-  };
+  const [officeName, setOfficeName] = useState(""); // 1. Added State for Date
+  const [searchTerm, setSearchTerm] = useState("");
+  let [isOpen, setIsOpen] = useState(false);
+  const [startDate, setStartDate] = useState(""); // add for start date
 
-  const [officeName, setOfficeName] = useState("");
+  // const searchFilteredOffices = offices.filter((office) => {
+  //   return office.name.toLowerCase().includes(searchTerm.toLowerCase());
+  // });
 
-  const handleOfficeInputForCreatingNewOffice = (e) => {
+  const handleOfficeInput = (e) => {
     setOfficeName(e.target.value);
-    console.log("office name : ", officeName);
   };
 
-  const handleNewOffice = () => {
-    handleAddNewOffice(officeName);
+  const handleDateInput = (e) => {
+    setStartDate(e.target.value);
+  };
+
+  const handleNewOfficeSubmit = () => {
+    if (!officeName) {
+      alert("Please enter an office name");
+      return;
+    }
+    addOffice(officeName, startDate);
+
     setOfficeName("");
+    setStartDate("");
+    setIsOpen(false);
   };
 
-  // for popup from submit
-  const [showModalOpen, setShowModalOpen] = useState(false);
-
-  const openModal = () => {
-    setShowModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setShowModalOpen(false);
+  const handleSpeicificOfficeDelete = (officeId) => {
+    handleDeleteOffice(officeId);
   };
 
   return (
@@ -66,6 +79,7 @@ const LeftSide = ({
                     </div>
                   </div>
                 </div>
+
                 <div className="w-full h-[42px] gap-[10px] flex flex-row mt-4 md:mt-[18px]">
                   <div className="flex-1 h-[42px] rounded-[4px] border pt-[9px] pr-[12px] pb-[9px] pl-[12px] gap-[10px] bg-figmaWhite-200 border-figmaWhite-500 flex flex-row">
                     <div className="w-full h-[24px] gap-[10px] flex flex-row">
@@ -74,62 +88,78 @@ const LeftSide = ({
                         <input
                           type="text"
                           placeholder="Search by name..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
                           className="bg-transparent outline-none w-full text-figmaBlack-100 mt"
                         />
                       </div>
                     </div>
                   </div>
-                  {/* <div onClick={handleAddNewOffice} className="w-[42px] h-[42px] rounded-[4px] border p-[9px] gpa-[10px] bg-figmaWhite-400 border-figmaBlue-400"> */}
-
-                  {/* <div
-                    onClick={handleNewOffice}
-                    className="w-[42px] h-[42px] rounded-[4px] border p-[9px] gpa-[10px] bg-figmaWhite-400 border-figmaBlue-400"
-                  >
-                    <img src={AddIcon} alt="" />
-                  </div> */}
 
                   <div
-                    onClick={openModal}
-                    className="w-[42px] h-[42px] rounded-[4px] border p-[9px] gpa-[10px] bg-figmaWhite-400 border-figmaBlue-400"
+                    onClick={() => setIsOpen(true)}
+                    className="w-[42px] h-[42px] rounded-[4px] border p-[9px] gpa-[10px] bg-figmaWhite-400 border-figmaBlue-400 cursor-pointer hover:bg-figmaWhite-300"
                   >
                     <img src={AddIcon} alt="" />
                   </div>
 
-                  <div
-                    className={`fixed inset-0 flex items-center justify-center z-50 ${
-                      showModalOpen ? "" : "hidden"
-                    }`}
+                  <Dialog
+                    open={isOpen}
+                    onClose={() => setIsOpen(false)}
+                    className="relative z-50 "
                   >
-                    <div
-                      className="absolute inset-0 bg-black opacity-50"
-                      onClick={closeModal}
-                    ></div>
-                    <div className="bg-white rounded-lg p-6 z-10 w-[90%] max-w-md">
-                      <h2 className="text-xl font-semibold mb-4">
-                        Add New Office
-                      </h2>
-                      <input
-                        type="text"
-                        value={officeName}
-                        onChange={handleOfficeInputForCreatingNewOffice}
-                        placeholder="Enter office name"
-                        className="w-full border border-figmaGray-300 rounded-md p-2 mb-4"
-                      />
-                      {/* Currently add the office. But, name is not being saved properly */}
+                    <div className="fixed inset-0 flex w-full items-center justify-center p-4 bg-figmaWhite-500/20 backdrop-brightness-50">
+                      <DialogPanel className="max-w-lg space-y-4 border w-full  bg-white p-12 rounded-[14px] shadow-xl">
+                        <DialogTitle className="font-bold text-xl flex justify-between items-center text-figmaBlack-100">
+                          <h2>Add New Office</h2>
+                          <img
+                            src={CloseIcon}
+                            alt="Close"
+                            className="cursor-pointer"
+                            onClick={() => setIsOpen(false)}
+                          />
+                        </DialogTitle>
 
-                      <div className="mt-4 flex justify-end gap-2">
-                        {/* <button onClick={handleAddNewOffice} className="bg-figmaBlue-400 text-white px-4 py-2 rounded-md">Submit</button>
-                        <button onClick={closeModal} className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md">Cancel</button> */}
-                        <button
-                          onClick={handleNewOffice}
-                          className="bg-figmaBlue-400 text-white px-4 py-2 rounded-md"
-                        >
-                          Save
-                        </button>
-                        <button onClick={closeModal}>Cancel</button>
-                      </div>
+                        <Description as="div">
+                          <h5 className="font-poppins text-sm text-figmaGray-200 mb-2">
+                            Office Name
+                          </h5>
+                          <input
+                            type="text"
+                            value={officeName}
+                            onChange={handleOfficeInput}
+                            placeholder="Enter office name"
+                            className="w-full border border-figmaGray-300 rounded-md p-2 mb-4 text-figmaBlack-100"
+                          />
+
+                          <h5 className="font-poppins text-sm text-figmaGray-200 mb-2">
+                            Start Date
+                          </h5>
+                          <input
+                            type="date"
+                            // value={startDate}
+                            onChange={handleDateInput}
+                            className="w-full border border-figmaGray-300 rounded-md p-2 mb-4 text-figmaBlack-100"
+                          />
+                        </Description>
+
+                        <div className="flex gap-4 justify-end mt-6">
+                          <button
+                            onClick={() => setIsOpen(false)}
+                            className="border border-figmaBlue-100 rounded-[2px] p-3 text-figmaBlue-100 font-medium text-sm hover:bg-gray-50"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleNewOfficeSubmit}
+                            className="bg-figmaBlue-100 rounded-[2px] p-3 text-figmaWhite-100 font-medium text-sm hover:bg-blue-600"
+                          >
+                            Add Office
+                          </button>
+                        </div>
+                      </DialogPanel>
                     </div>
-                  </div>
+                  </Dialog>
                 </div>
               </div>
 
@@ -146,31 +176,67 @@ const LeftSide = ({
               </div>
             </div>
 
-            <div className="w-full gap-[10px] mt-[10px] pb-10 overflow-x-hidden overflow-y-auto no-scrollbar scrollbar-hide  h-auto lg:h-[610px]">
+            {/* <div className="w-full gap-[10px] mt-[10px] pb-10 overflow-x-hidden overflow-y-auto no-scrollbar scrollbar-hide  h-auto lg:h-[610px]"> */}
+            <div className="w-full h-auto gap-[10px] mt-[10px] pb-10 overflow-x-hidden overflow-y-scroll no-scrollbar scrollbar-hide lg:h-[610px]">
               {offices &&
-                offices.map((office) => (
-                  <div
-                    key={office.id}
-                    onClick={() => setActiveOfficeId(office.id)}
-                    className={`w-full h-auto py-4 md:py-5 border-b hover:bg-figmaWhite-100 border-figmaWhite-200 px-3 md:px-[14px] gap-5 flex flex-row justify-between items-center cursor-pointer transition-colors duration-200
+                offices
+                  .filter((o) =>
+                    o.name.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((office) => (
+                    <div
+                      key={office.id}
+                      onClick={() => setActiveOfficeId(office.id)}
+                      className={`w-full h-auto py-4 md:py-5 border-b text-figmaBlack-100 hover:bg-figmaWhite-100 border-figmaWhite-200 px-3 md:px-[14px] gap-5 flex flex-row justify-between items-center cursor-pointer transition-colors duration-200
                   ${
                     activeOfficeId === office.id
-                      ? "bg-figmaWhite-400 rounded-md"
+                      ? "bg-figmaWhite-400 rounded-md text-figmaBlack-100"
                       : "bg-transparent hover:bg-gray-50"
                   }`}
-                  >
-                    <div
-                      className={`flex-1 font-poppins text-sm md:text-base ${
-                        activeOfficeId === office.id
-                          ? "font-medium text-figmaBlack-100"
-                          : "font-normal text-figmaGray-100"
-                      }`}
                     >
-                      {office.name}
+                      <div
+                        className={`flex-1 font-poppins text-sm md:text-base ${
+                          activeOfficeId === office.id
+                            ? "font-medium text-figmaBlack-100"
+                            : "font-normal text-figmaGray-100"
+                        }`}
+                      >
+                        {office.name}
+                      </div>
+
+                      <Popover className="relative">
+                        <PopoverButton className="block text-sm/6 font-semibold focus:outline-none">
+                          <img src={MoreInfoIcon} alt="more info icon" />
+                        </PopoverButton>
+                        <PopoverPanel
+                          transition
+                          anchor="bottom end"
+                          className="divide-y rounded-xl bg-white text-sm/6 transition duration-200 ease-in-out [--anchor-gap:4px] shadow-xl border border-gray-100 z-50 p-1"
+                        >
+                          <div className="flex flex-col w-[160px]">
+                            <button
+                              onClick={() => setIsOpen(true)}
+                              className="text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                            >
+                              Edit Name
+                            </button>
+                            <button className="text-left px-4 py-2 hover:bg-gray-100 text-gray-700">
+                              Deactivate
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSpeicificOfficeDelete(office.id);
+                              }}
+                              className="text-left px-4 py-2 hover:bg-gray-100 text-red-500"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </PopoverPanel>
+                      </Popover>
                     </div>
-                    <img src={MoreInfoIcon} alt="more info icon" />
-                  </div>
-                ))}
+                  ))}
             </div>
           </div>
         </div>

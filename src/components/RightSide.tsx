@@ -15,10 +15,10 @@ const RightSide = ({
 
   makeConnectionsOptions,
   makeMultiConnectionOptions,
-  connectionRows, 
-  onAddConnection, 
-  onDivisionChange, 
-  onTradesChange, 
+  connectionRows,
+  onAddConnection,
+  onDivisionChange,
+  onTradesChange,
   onRemoveConnection,
 }) => {
   const [activeTab, setActiveTab] = useState("officeDetails");
@@ -26,6 +26,7 @@ const RightSide = ({
   const [formData, setFormData] = useState({
     id: null,
     name: "",
+    startDate: "",
     phone: "",
     address: "",
     city: "",
@@ -43,6 +44,7 @@ const RightSide = ({
         setFormData({
           id: currentOffice.id,
           name: currentOffice.name || "",
+          startDate: currentOffice.startDate || "",
           phone: currentOffice.phone || "",
           address: currentOffice.address || "",
           city: currentOffice.city || "",
@@ -55,6 +57,10 @@ const RightSide = ({
       }
     }
   }, [activeOfficeId, offices]);
+
+  useEffect(() => {
+    setOfficeModified(false);
+  }, [activeOfficeId, setOfficeModified]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -72,7 +78,7 @@ const RightSide = ({
   };
 
   const handleSaveClick = () => {
-    if (onUpdateOffice) {
+    if (onUpdateOffice && officeModified) {
       onUpdateOffice(formData);
     }
   };
@@ -90,7 +96,7 @@ const RightSide = ({
               style={buttonStyle}
               className="w-auto px-4 py-2 rounded-[4px] bg-figmaWhite-300 cursor-pointer transition-colors"
             >
-              <div className="font-poppins font-normal text-sm leading-[169%] tracking-normal text-figmaGray-300 whitespace-nowrap">
+              <div className="font-poppins font-normal text-sm leading-[169%] tracking-normal whitespace-nowrap">
                 Save Changes
               </div>
             </div>
@@ -323,7 +329,7 @@ const RightSide = ({
                   </div>
                   <div
                     className="w-[36px] h-[36px] rounded-[4px] border p-[6px] gap-[10px] bg-figmaWhite-400 border-figmaBlue-400 cursor-pointer"
-                    onClick={onAddConnection} 
+                    onClick={onAddConnection}
                   >
                     <img src={AddIcond} alt="Add" />
                   </div>
@@ -341,8 +347,8 @@ const RightSide = ({
                         </p>
                         <Select
                           className="w-[280px] h-full mt-[10px]"
-                          value={row.division} 
-                          onChange={(val) => onDivisionChange(row.id, val)} 
+                          value={row.division}
+                          onChange={(val) => onDivisionChange(row.id, val)}
                           options={makeConnectionsOptions}
                         />
                       </div>
@@ -353,8 +359,8 @@ const RightSide = ({
                         </p>
                         <Select
                           className="w-full h-full mt-[10px]"
-                          value={row.trades} 
-                          onChange={(val) => onTradesChange(row.id, val)} 
+                          value={row.trades}
+                          onChange={(val) => onTradesChange(row.id, val)}
                           options={makeMultiConnectionOptions}
                           isMulti
                         />
@@ -364,14 +370,13 @@ const RightSide = ({
                           src={CloseIcon}
                           alt="Close"
                           className="cursor-pointer hover:opacity-70 items-center mt-5"
-                          onClick={() => onRemoveConnection(row.id)} 
+                          onClick={() => onRemoveConnection(row.id)}
                         />
                         <img
                           src={CheckIcon}
                           alt="Check"
                           className="cursor-pointer mt-5"
                         />
-                        
                       </div>
                     </div>
                   ))}

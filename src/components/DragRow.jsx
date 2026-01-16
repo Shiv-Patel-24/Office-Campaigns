@@ -13,7 +13,7 @@ const DragRow = ({ moveItem, item }) => {
     };
   };
 
-  const [ drop] = useDrop({
+  const [drop] = useDrop({
     accept: "row",
     drop: (updateItems, monitor) => {
       const dragIndex = updateItems.index;

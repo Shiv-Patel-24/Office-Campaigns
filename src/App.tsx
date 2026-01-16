@@ -24,6 +24,7 @@ interface CampaignItem {
 interface OfficeData {
   id: number;
   name: string;
+  startDate?: string;
   phone: string;
   address: string;
   city: string;
@@ -34,6 +35,7 @@ interface OfficeData {
   contactEmail: string;
   connections: Connection[];
   campaigns: CampaignItem[];
+  campaignFrequency?: string;
 }
 
 const DEFAULT_CAMPAIGNS = [
@@ -51,90 +53,9 @@ const DEFAULT_CAMPAIGNS = [
     time: "01 d : 02 h : 30 m Left",
     edit: "edit",
   },
-  {
-    id: 3,
-    contactMethod: "SMS",
-    template: "Reminder SMS",
-    time: "00 d : 05 h : 00 m Left",
-    edit: "edit",
-  },
 ];
 
-// Helper to create a fresh copy of campaigns so User 1 and User 2 don't share references
 const getFreshCampaigns = () => JSON.parse(JSON.stringify(DEFAULT_CAMPAIGNS));
-
-const INITIAL_OFFICE_DATA: OfficeData[] = [
-  {
-    id: 1,
-    name: "Canvas Reset",
-    phone: "19492330170",
-    address: "123 Main St",
-    city: "South Beryltion",
-    state: "Maryland",
-    zip: "12345",
-    contactName: "Cyrus",
-    contactPhone: "19492330170",
-    contactEmail: "adrien@grady.com",
-    connections: [],
-    campaigns: getFreshCampaigns(), // Deep copy
-  },
-  {
-    id: 2,
-    name: "Rahesh client",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    contactName: "",
-    contactPhone: "",
-    contactEmail: "",
-    connections: [],
-    campaigns: getFreshCampaigns(), //Deep copy
-  },
-  {
-    id: 3,
-    name: "Storm FolloUp",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    contactName: "",
-    contactPhone: "",
-    contactEmail: "",
-    connections: [],
-    campaigns: getFreshCampaigns(),
-  },
-  {
-    id: 4,
-    name: "Reschedule",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    contactName: "",
-    contactPhone: "",
-    contactEmail: "",
-    connections: [],
-    campaigns: getFreshCampaigns(),
-  },
-  {
-    id: 5,
-    name: "Confirmation",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    contactName: "",
-    contactPhone: "",
-    contactEmail: "",
-    connections: [],
-    campaigns: getFreshCampaigns(),
-  },
-];
 
 const makeConnectionsOptions = [
   { value: "Retail", label: "Retail" },
@@ -151,13 +72,26 @@ const makeMultiConnectionOptions = [
   { value: "Windows", label: "Windows" },
 ];
 
+const makeCampaignContactMethodOptions = [
+  { value: "Call", label: "Call" },
+  { value: "Email", label: "Email" },
+  { value: "SMS", label: "SMS" },
+];
+
+const makeCampaignTemplateOptions = [
+  { value: "Intro Call", label: "Intro Call" },
+  { value: "Follow-up Email", label: "Follow-up Email" },
+  { value: "Reminder SMS", label: "Reminder SMS" },
+];
+
 function App() {
-  const [currentView, setCurrentView] = useState("office");
+  const [currentView, setCurrentView] = useState("campaign");
 
   const [offices, setOffices] = useState<OfficeData[]>([
     {
       id: 1,
       name: "Canvas Reset",
+      startDate: "",
       phone: "19492330170",
       address: "123 Main St",
       city: "South Beryltion",
@@ -167,60 +101,13 @@ function App() {
       contactPhone: "19492330170",
       contactEmail: "adrien@grady.com",
       connections: [],
-      campaigns: getFreshCampaigns(), // Deep copy
+      campaigns: getFreshCampaigns(),
+      campaignFrequency: "runOnce",
     },
     {
       id: 2,
       name: "Rahesh client",
-      phone: "",
-      address: "",
-      city: "",
-      state: "",
-      zip: "",
-      contactName: "",
-      contactPhone: "",
-      contactEmail: "",
-      connections: [],
-      campaigns: getFreshCampaigns(), 
-    },
-  ]);
-  const [activeOfficeId, setActiveOfficeId] = useState(1);
-  const [officeModified, setOfficeModified] = useState(false);
-
-  const [currentCampaignItems, setCurrentCampaignItems] = useState<
-    CampaignItem[]
-  >([]);
-  const [isCampaignModified, setIsCampaignModified] = useState(false);
-
-  const [options, setOptions] = useState("");
-  const [options2, setOptions2] = useState("");
-  const month = ["Jan", "Feb"];
-
-  useEffect(() => {
-    const activeUser = offices.find((o) => o.id === activeOfficeId);
-    if (activeUser) {
-      setCurrentCampaignItems(activeUser.campaigns || []);
-      setIsCampaignModified(false);
-    } else {
-      setCurrentCampaignItems([]);
-    }
-  }, [activeOfficeId, offices]);
-
-  const activeOffice = offices.find((o) => o.id === activeOfficeId) || {};
-  const currentConnectionRows = activeOffice.connections || [];
-
-  const handleAddNewOffice = (newOfficeData: OfficeData) => {
-    console.log("handleAddnewOffice clicked");
-    setOffices((prevOffices) => [...prevOffices, newOfficeData]);
-    console.log("new office data will be added", newOfficeData);
-  };
-
-  const addOffice = () => {
-    const newOfficeId = offices.length + 1;
-    const newOffice: OfficeData = {
-      id: newOfficeId + Date.now(),
-      // name : `New Office ${newOfficeId}`,
-      name: "",
+      startDate: "",
       phone: "",
       address: "",
       city: "",
@@ -231,16 +118,97 @@ function App() {
       contactEmail: "",
       connections: [],
       campaigns: getFreshCampaigns(),
+      campaignFrequency: "runOnce",
+    },
+  ]);
+
+  const [activeOfficeId, setActiveOfficeId] = useState(1);
+  const [officeModified, setOfficeModified] = useState(false);
+
+  const [currentCampaignItems, setCurrentCampaignItems] = useState<
+    CampaignItem[]
+  >([]);
+  const [currentFrequency, setCurrentFrequency] = useState("runOnce");
+  const [isCampaignModified, setIsCampaignModified] = useState(false);
+
+  useEffect(() => {
+    const activeUser = offices.find((o) => o.id === activeOfficeId);
+    if (activeUser) {
+      setCurrentCampaignItems(
+        activeUser.campaigns
+          ? JSON.parse(JSON.stringify(activeUser.campaigns))
+          : []
+      );
+      setCurrentFrequency(activeUser.campaignFrequency || "runOnce");
+      setIsCampaignModified(false);
+    } else {
+      setCurrentCampaignItems([]);
+      setCurrentFrequency("runOnce");
+    }
+  }, [activeOfficeId, offices]);
+
+  const activeOffice = offices.find((o) => o.id === activeOfficeId) || {};
+  const currentConnectionRows = activeOffice.connections || [];
+
+  const addOffice = (newName: string, newStartDate: string) => {
+    const newOfficeId = offices.length + 1 + Date.now();
+    const newOffice: OfficeData = {
+      id: newOfficeId,
+      name: newName,
+      startDate: newStartDate,
+      phone: "",
+      address: "",
+      city: "",
+      state: "",
+      zip: "",
+      contactName: "",
+      contactPhone: "",
+      contactEmail: "",
+      connections: [],
+      campaigns: getFreshCampaigns(),
+      campaignFrequency: "runOnce",
     };
-    handleAddNewOffice(newOffice);
-    console.log("addOffice clicked", newOffice);
+    setOffices((prevOffices) => [...prevOffices, newOffice]);
+    setActiveOfficeId(newOfficeId);
+    setOfficeModified(false);
+    setIsCampaignModified(false);
   };
 
   const handleDeleteOffice = (officeId: number) => {
-    setOffices((prevOffices) =>
-      prevOffices.filter((offices) => officeId !== offices.id)
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this?"
     );
-    console.log("office data will be deleted", officeId);
+    if (confirmDelete) {
+      setOffices((prevOffices) => {
+        const updatedOffices = prevOffices.filter(
+          (office) => officeId !== office.id
+        );
+        if (officeId === activeOfficeId && updatedOffices.length > 0) {
+          setActiveOfficeId(updatedOffices[0].id);
+        } else if (updatedOffices.length === 0) {
+          setActiveOfficeId(0);
+        }
+        return updatedOffices;
+      });
+    }
+  };
+
+  const handleUpdateOffice = (data: any) => {
+    setOffices((prev) =>
+      prev.map((o) =>
+        o.id === data.id
+          ? {
+              ...o,
+              ...data,
+              connections: o.connections,
+              campaigns: o.campaigns,
+              campaignFrequency: o.campaignFrequency,
+            }
+          : o
+      )
+    );
+    setOfficeModified(false);
+    alert("Saved Successfully!");
   };
 
   const addConnectionRow = () => {
@@ -259,7 +227,6 @@ function App() {
     );
     setOfficeModified(true);
   };
-
   const handleDivisionChange = (rowId: number, val: any) => {
     setOffices((prev) =>
       prev.map((o) =>
@@ -275,7 +242,6 @@ function App() {
     );
     setOfficeModified(true);
   };
-
   const handleTradesChange = (rowId: number, val: any) => {
     setOffices((prev) =>
       prev.map((o) =>
@@ -291,7 +257,6 @@ function App() {
     );
     setOfficeModified(true);
   };
-
   const removeConnectionRow = (rowId: number) => {
     setOffices((prev) =>
       prev.map((o) =>
@@ -303,36 +268,57 @@ function App() {
     setOfficeModified(true);
   };
 
-  const handleUpdateOffice = (data: any) => {
-    setOffices((prev) =>
-      prev.map((o) =>
-        o.id === data.id
-          ? {
-              ...o,
-              ...data,
-              connections: o.connections,
-              campaigns: o.campaigns,
-            }
-          : o
-      )
-    );
-    setOfficeModified(false);
-    alert("Office Info Saved!");
-  };
-
-  const getTaskPos = (id: number) =>
-    currentCampaignItems.findIndex((task) => task.id === id);
-
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
     setCurrentCampaignItems((items) => {
-      const originalPos = getTaskPos(active.id);
-      const newPos = getTaskPos(over.id);
+      const originalPos = items.findIndex(
+        (item) => String(item.id) === String(active.id)
+      );
+      const newPos = items.findIndex(
+        (item) => String(item.id) === String(over.id)
+      );
+
+      if (originalPos === -1 || newPos === -1) return items;
+
       setIsCampaignModified(true);
       return arrayMove(items, originalPos, newPos);
     });
+  };
+
+  const handleAddCampaignRow = () => {
+    const newRow: CampaignItem = {
+      id: Date.now(),
+      contactMethod: "Call",
+      template: "",
+      time: "00 d : 00 h : 00 m Left",
+      edit: "edit",
+    };
+    setCurrentCampaignItems((prev) => [...prev, newRow]);
+    setIsCampaignModified(true);
+  };
+
+  const handleDeleteCampaignRow = (rowId: number) => {
+    if (window.confirm("Delete this step?")) {
+      setCurrentCampaignItems((prev) =>
+        prev.filter((item) => item.id !== rowId)
+      );
+      setIsCampaignModified(true);
+    }
+  };
+
+  const handleUpdateCampaignRow = (
+    rowId: number,
+    field: string,
+    value: any
+  ) => {
+    setCurrentCampaignItems((prev) =>
+      prev.map((item) =>
+        item.id === rowId ? { ...item, [field]: value } : item
+      )
+    );
+    setIsCampaignModified(true);
   };
 
   const handlerSaveCampaignLayout = () => {
@@ -341,14 +327,15 @@ function App() {
         if (office.id === activeOfficeId) {
           return {
             ...office,
-            campaigns: currentCampaignItems,
+            campaigns: JSON.parse(JSON.stringify(currentCampaignItems)),
+            campaignFrequency: currentFrequency,
           };
         }
         return office;
       })
     );
     setIsCampaignModified(false);
-    alert(`Campaign layout saved for User ID: ${activeOfficeId}`);
+    alert(`Campaign details saved!`);
   };
 
   return (
@@ -356,64 +343,54 @@ function App() {
       <div className="w-full lg:w-[360px] lg:h-full lg:flex-shrink-0 border-r border-figmaWhite-300 bg-figmaWhite-200 overflow-hidden">
         {/* {currentView === 'office' ? ( */}
         {/* <LeftSide
-          offices={offices}
-          activeOfficeId={activeOfficeId}
-          setActiveOfficeId={setActiveOfficeId}
-          handleAddNewOffice={handleAddNewOffice}
-          handleDeleteOffice={handleDeleteOffice}
-
-          addOffice={addOffice}
-        /> */}
-
-        {/* // ) : ( */}
+            offices={offices}
+            activeOfficeId={activeOfficeId}
+            setActiveOfficeId={setActiveOfficeId}
+            handleDeleteOffice={handleDeleteOffice}
+            addOffice={addOffice}
+            handleAddNewOffice={() => {}} 
+          /> */}
+        
+        {/* ) : ( */}
 
         <CamLeftSide
           activeUserId={activeOfficeId}
           setActiveUserId={setActiveOfficeId}
           offices={offices}
+          addOffice={addOffice}
+          handleDeleteOffice={handleDeleteOffice}
+          handleUpdateOffice={handleUpdateOffice}
         />
+  
         {/* )} */}
       </div>
 
       <div className="flex-1 h-full overflow-y-auto overflow-x-hidden relative">
         {/* <button 
             onClick={() => setCurrentView(v => v === 'office' ? 'campaign' : 'office')}
-            className="absolute top-2 right-10 z-[60] bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-xs font-semibold text-gray-700 transition-colors"
+            className="absolute top-2 right-10 z-[60] bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-xs font-semibold text-gray-700 transition-colors shadow-sm"
         >
             {currentView === 'office' ? "Switch to Campaign View" : "Switch to Office View"}
         </button> */}
 
         {/* {currentView === 'office' ? ( */}
-
         {/* <RightSide
-          activeOfficeId={activeOfficeId}
-          offices={offices}
-          officeModified={officeModified}
-          setOfficeModified={setOfficeModified}
-          onUpdateOffice={handleUpdateOffice}
-          makeConnectionsOptions={makeConnectionsOptions}
-          makeMultiConnectionOptions={makeMultiConnectionOptions}
-          connectionRows={currentConnectionRows}
-          onAddConnection={addConnectionRow}
-          onRemoveConnection={removeConnectionRow}
-          onDivisionChange={handleDivisionChange}
-          onTradesChange={handleTradesChange}
-          addSelect={() => {}}
-          selections={[]}
-          handleSelectionChange={() => {}}
-          onAddButtonClick={() => {}}
-          selectsList={[]}
-          onOptionsChange={() => {}}
-          handlerSelectedMakeConnectionChange={() => {}}
-          selectedMakeConnection={null}
-          multiSelectedMakeConnection={null}
-          handlerMultiSelectedMakeConnectionChange={() => {}}
-          addOffice={addOffice}
-
-        /> */}
-
+            activeOfficeId={activeOfficeId}
+            offices={offices}
+            officeModified={officeModified}
+            setOfficeModified={setOfficeModified}
+            onUpdateOffice={handleUpdateOffice}
+            makeConnectionsOptions={makeConnectionsOptions}
+            makeMultiConnectionOptions={makeMultiConnectionOptions}
+            connectionRows={currentConnectionRows}
+            onAddConnection={addConnectionRow}
+            onRemoveConnection={removeConnectionRow}
+            onDivisionChange={handleDivisionChange}
+            onTradesChange={handleTradesChange}
+            // Not using 
+            addSelect={() => {}} selections={[]} handleSelectionChange={() => {}} onAddButtonClick={() => {}} selectsList={[]} onOptionsChange={() => {}} handlerSelectedMakeConnectionChange={() => {}} selectedMakeConnection={null} multiSelectedMakeConnection={null} handlerMultiSelectedMakeConnectionChange={() => {}} addOffice={addOffice}
+          /> */}
         {/* ) : ( */}
-
         <DndContext
           onDragEnd={handleDragEnd}
           collisionDetection={closestCenter}
@@ -424,16 +401,16 @@ function App() {
             onSave={handlerSaveCampaignLayout}
             isModified={isCampaignModified}
             setIsModified={setIsCampaignModified}
-            month={month}
-            values={options}
-            onChange={(newValue: any) => setOptions(newValue)}
-            placeholder="Default Track1"
-            option2={["Jan"]}
-            values2={options2}
-            onChange2={(newValue: any) => setOptions2(newValue)}
-            placeholder2="Move Campaign"
-            option22={["Feb"]}
-            layout={currentCampaignItems}
+            frequency={currentFrequency}
+            setFrequency={(val: string) => {
+              setCurrentFrequency(val);
+              setIsCampaignModified(true);
+            }}
+            onAddRow={handleAddCampaignRow}
+            onDeleteRow={handleDeleteCampaignRow}
+            onUpdateRow={handleUpdateCampaignRow}
+            makeCampaignContactMethodOptions={makeCampaignContactMethodOptions}
+            makeCampaignTemplateOptions={makeCampaignTemplateOptions}
           />
         </DndContext>
         {/* )} */}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import MatrixIcon from "../assets/icons/Matrix.svg";
 import AddIcons from "../assets/icons/Add2.svg";
 import ChevronIcon from "../assets/icons/ChevronIcon.svg";
@@ -10,10 +10,15 @@ import DragDrop from "./DragDrop";
 
 const CamRightSide = ({
   item,
-  setItem,
   onSave,
   isModified,
-  layout,
+  frequency,
+  setFrequency,
+  onAddRow,
+  onDeleteRow,
+  onUpdateRow,
+  makeCampaignContactMethodOptions,
+  makeCampaignTemplateOptions,
   values,
   placeholder,
   values2,
@@ -33,9 +38,20 @@ const CamRightSide = ({
     cursor: isModified ? "pointer" : "not-allowed",
   };
 
-  useEffect(() => {
-    console.log(layout, "layout changed in right side");
-  }, [item, layout]);
+  const handleRadioChange = (e) => {
+    setFrequency(e.target.id);
+  };
+
+  const selectedTemplates = item.map((i) => i.template);
+
+  const getOptionsForRow = (currentRowTemplate) => {
+    return makeCampaignTemplateOptions.filter((option) => {
+      return (
+        !selectedTemplates.includes(option.value) ||
+        option.value === currentRowTemplate
+      );
+    });
+  };
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden bg-white">
@@ -102,25 +118,38 @@ const CamRightSide = ({
 
             <div className="flex flex-col md:flex-row gap-6 mb-8">
               <div className="flex items-center gap-[10px]">
-                <input type="radio" id="runOnce" name="runcamp" />
+                <input
+                  type="radio"
+                  id="runOnce"
+                  name="runcamp"
+                  checked={frequency === "runOnce"}
+                  onChange={handleRadioChange}
+                  className="cursor-pointer"
+                />
                 <label
                   htmlFor="runOnce"
-                  className="font-poppins font-normal text-sm text-figmaGray-100"
+                  className="font-poppins font-normal text-sm text-figmaGray-100 cursor-pointer"
                 >
                   Run Campaign once
                 </label>
               </div>
               <div className="flex items-center gap-[10px]">
-                <input type="radio" id="runUnlimited" name="runcamp" />
+                <input
+                  type="radio"
+                  id="runUnlimited"
+                  name="runcamp"
+                  checked={frequency === "runUnlimited"}
+                  onChange={handleRadioChange}
+                  className="cursor-pointer"
+                />
                 <label
                   htmlFor="runUnlimited"
-                  className="font-poppins font-normal text-sm text-figmaGray-100"
+                  className="font-poppins font-normal text-sm text-figmaGray-100 cursor-pointer"
                 >
                   Run Campaign Unlimited
                 </label>
               </div>
             </div>
-
             <div className="flex flex-col md:flex-row w-full justify-between items-start md:items-center gap-4">
               <div className="font-poppins font-medium text-base text-figmaBlack-100">
                 Contact Details
@@ -212,11 +241,10 @@ const CamRightSide = ({
                     <div className="w-[50px] pl-4 ml-6">
                       <input type="checkbox" className="w-[18px] h-[18px]" />
                     </div>
-                    <div className="w-[40px]  text-center">#</div>
-                    <div className="w-[210px]">Contact Method</div>
-                    {/* <div className="w-[140px]">Contact Method</div> */}
-                    <div className="flex-1 ">Template</div>
-                    <div className="w-[270px]">Time</div>
+                    <div className="w-[40px] text-center">#</div>
+                    <div className="w-[190px]">Contact Method</div>
+                    <div className="flex-1 pl-2">Template</div>
+                    <div className="w-[280px]">Time (Days : Hours : Mins)</div>
                     <div className="w-[80px] text-center pr-4">Action</div>
                   </div>
                 </div>
@@ -226,18 +254,28 @@ const CamRightSide = ({
                     items={item}
                     strategy={verticalListSortingStrategy}
                   >
-                    {item.map((itm) => (
+                    {item.map((itm, index) => (
                       <DragDrop
                         key={itm.id}
                         id={itm.id}
+                        displayId={index + 1}
                         title={itm.template}
                         contactMethod={itm.contactMethod}
                         time={itm.time}
+                        onDelete={() => onDeleteRow(itm.id)}
+                        onUpdate={(field, val) =>
+                          onUpdateRow(itm.id, field, val)
+                        }
+                        contactOptions={makeCampaignContactMethodOptions}
+                        templateOptions={getOptionsForRow(itm.template)}
                       />
                     ))}
                   </SortableContext>
 
-                  <div className="flex flex-row items-center gap-[10px] mt-4 ml-4 cursor-pointer hover:opacity-80">
+                  <div
+                    onClick={onAddRow}
+                    className="flex flex-row items-center gap-[10px] mt-4 ml-4 cursor-pointer hover:opacity-80 transition-opacity"
+                  >
                     <div className="w-9 h-9 rounded-[4px] border border-figmaBlue-400 bg-figmaWhite-400 flex items-center justify-center">
                       <img src={AddIcons} alt="add icon" />
                     </div>
